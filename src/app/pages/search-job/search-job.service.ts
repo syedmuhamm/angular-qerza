@@ -1,16 +1,17 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { catchError, Observable, of } from 'rxjs';
-// import { Job } from '../interfaces/job.interface';
-// import { LocalStorageService } from '../_oautch/_services/localstorage.service';
-// import { CookieService } from '../_oautch/_services/cookie.service';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
-const API_URL = 'http://localhost:3000/api/jobs'; // Change this to your backend API URL
+const API_URL = 'http://localhost:3000/api/jobs';
 
 export interface Job {
-  id?: any,
-  title: string,
-  description: string,
+  id?: number;
+  title: string;
+  company: string;
+  companylogo: string;
+  salary: string;
+  location: string;
+  url: string;
 }
 
 @Injectable({
@@ -27,10 +28,14 @@ export class SearchJobService {
 
   // Fetch all jobs with auth header
   getAllJobs(): Observable<Job[]> {
-    return this.http.get<Job[]>(`${API_URL}`);
-    // return of([] as Job[]);
+    return this.http.get<Job[]>(API_URL);
   }
 
+  createJob(job: Job): Observable<Job> {
+    return this.http.post<Job>(API_URL, job);
+  }
+
+  // (optional for later: updateJob(), deleteJob())
 
   // // Helper function to get headers with token
   // private getAuthHeaders(): HttpHeaders {
