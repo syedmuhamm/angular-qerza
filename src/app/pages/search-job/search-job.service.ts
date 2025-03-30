@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 const API_URL = 'http://localhost:3000/api/jobs';
 
 export interface Job {
-  id?: number;
+  id: number;
   title: string;
   company: string;
   companylogo: string;
@@ -31,9 +31,23 @@ export class SearchJobService {
     return this.http.get<Job[]>(API_URL);
   }
 
-  createJob(job: Job): Observable<Job> {
+  createJob(job: Omit<Job, 'id'>): Observable<Job> {
     return this.http.post<Job>(API_URL, job);
   }
+
+  updateJob(id: number, job: Job): Observable<Job> {
+    return this.http.put<Job>(`${API_URL}/${id}`, job);
+  }
+  
+  deleteJob(id: number): Observable<void> {
+    return this.http.delete<void>(`${API_URL}/${id}`);
+  }
+
+  trackByJobId(index: number, job: Job): number {
+    return job.id!;
+  }
+
+}
 
   // (optional for later: updateJob(), deleteJob())
 
@@ -156,4 +170,4 @@ export class SearchJobService {
   // deleteJob(jobId: number): Observable<void> {
   //   return this.http.delete<void>(`${API_URL}/delete/${jobId}`, { headers: this.getAuthHeaders() });
   // }
-}
+

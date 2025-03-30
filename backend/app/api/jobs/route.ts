@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from "@/app/utils/db";
+import pool from '@/app/utils/db';
 
 export async function GET() {
   try {
-    const result = await pool.query('SELECT * FROM jobs');
-    return NextResponse.json(result.rows); // Return query results
+    const result = await pool.query('SELECT * FROM jobs ORDER BY id DESC');
+    return NextResponse.json(result.rows);
   } catch (error: any) {
-    console.error('Database error:', error.message, error.stack); // Log error details
+    console.error('GET Error:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -25,8 +25,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result.rows[0], { status: 201 });
   } catch (error: any) {
-    console.error('Database error:', error.message, error.stack);
+    console.error('POST Error:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
