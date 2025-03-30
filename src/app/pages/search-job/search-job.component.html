@@ -115,42 +115,93 @@
 
 <!-- Modal -->
 <ng-template #exampleModal let-modal>
-  <div class="modal-header">
-    <h5 class="modal-title">{{ selectedJob.id ? 'Edit Job' : 'Create Job' }}</h5>
-    <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
-  </div>
-  <div class="modal-body">
-    <div class="row">
-      <div class="col-xl-6 mb-3">
-        <label class="form-label">Title</label>
-        <input class="form-control" [(ngModel)]="selectedJob.title" placeholder="Senior UX Designer">
-      </div>
-      <div class="col-xl-6 mb-3">
-        <label class="form-label">Company</label>
-        <input class="form-control" [(ngModel)]="selectedJob.company" placeholder="Highspeed Studios">
-      </div>
-      <div class="col-xl-6 mb-3">
-        <label class="form-label">Company Logo</label>
-        <input class="form-control" [(ngModel)]="selectedJob.companylogo" placeholder="assets/images/companylogo/1.svg">
-      </div>
-      <div class="col-xl-6 mb-3">
-        <label class="form-label">Salary</label>
-        <input class="form-control" [(ngModel)]="selectedJob.salary" placeholder="$14,000 - $25,000">
-      </div>
-      <div class="col-xl-6 mb-3">
-        <label class="form-label">Location</label>
-        <input class="form-control" [(ngModel)]="selectedJob.location" placeholder="London, England">
-      </div>
-      <div class="col-xl-6 mb-3">
-        <label class="form-label">URL</label>
-        <input class="form-control" [(ngModel)]="selectedJob.url" placeholder="admin/profile">
+  <form #jobForm="ngForm" (ngSubmit)="saveJob(jobForm)" novalidate>
+    <div class="modal-header">
+      <h5 class="modal-title">{{ selectedJob.id ? 'Edit Job' : 'Create Job' }}</h5>
+      <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
+    </div>
+    <div class="modal-body">
+      <div class="row">
+        <div class="col-xl-6 mb-3">
+          <label class="form-label">Title</label>
+          <input
+            class="form-control"
+            [(ngModel)]="selectedJob.title"
+            name="title"
+            required
+            minlength="2"
+            placeholder="Senior UX Designer" />
+          <div *ngIf="jobForm.submitted && jobForm.controls['title']?.invalid" class="text-danger">
+            Title is required and must be at least 2 characters.
+          </div>
+        </div>
+
+        <div class="col-xl-6 mb-3">
+          <label class="form-label">Company</label>
+          <input
+            class="form-control"
+            [(ngModel)]="selectedJob.company"
+            name="company"
+            required
+            placeholder="Highspeed Studios" />
+          <div *ngIf="jobForm.submitted && jobForm.controls['company']?.invalid" class="text-danger">
+            Company name is required.
+          </div>
+        </div>
+
+        <div class="col-xl-6 mb-3">
+          <label class="form-label">Company Logo</label>
+          <input
+            class="form-control"
+            [(ngModel)]="selectedJob.companylogo"
+            name="companylogo"
+            required
+            placeholder="Logo URL" />
+          <div *ngIf="jobForm.submitted && jobForm.controls['companylogo'].invalid" class="text-danger">
+            Company logo is required.
+          </div>
+        </div>
+
+        <div class="col-xl-6 mb-3">
+          <label class="form-label">Salary</label>
+          <input type="number" class="form-control" [(ngModel)]="selectedJob.salary" name="salary" required min="0" placeholder="e.g. 25000">
+          <div *ngIf="jobForm.submitted && jobForm.controls['salary']?.invalid" class="text-danger">
+            Salary must be a positive number and is required.
+          </div>
+        </div>
+
+        <div class="col-xl-6 mb-3">
+          <label class="form-label">Location</label>
+          <input
+            class="form-control"
+            [(ngModel)]="selectedJob.location"
+            name="location"
+            required
+            placeholder="City, Country" />
+          <div *ngIf="jobForm.submitted && jobForm.controls['location']?.invalid" class="text-danger">
+            Location is required.
+          </div>
+        </div>
+
+        <div class="col-xl-6 mb-3">
+          <label class="form-label">URL</label>
+          <input type="url" class="form-control" 
+          [(ngModel)]="selectedJob.url" 
+          name="url" 
+          required
+          pattern="https?://.+" 
+          placeholder="https://example.com/job-url">          <div *ngIf="jobForm.submitted && jobForm.controls['url']?.invalid" class="text-danger">
+            Please enter a valid job URL (e.g., https://example.com/job).
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-danger light" (click)="modal.dismiss()">Close</button>
-    <button type="button" class="btn btn-primary" (click)="saveJob()">
-      {{ selectedJob.id ? 'Update Job' : 'Save Job' }}
-    </button>
-  </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-danger light" (click)="modal.dismiss()">Close</button>
+      <button type="submit" class="btn btn-primary" [disabled]="jobForm.invalid">
+        {{ selectedJob.id ? 'Update Job' : 'Save Job' }}
+      </button>
+    </div>
+  </form>
 </ng-template>

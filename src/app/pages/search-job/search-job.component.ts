@@ -6,6 +6,8 @@ import { SearchJobService, Job } from './search-job.service';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { NgForm } from '@angular/forms';
+
 
 @Component({
   selector: 'app-search-job',
@@ -56,14 +58,19 @@ export class SearchJobComponent implements OnInit {
   loadJobs() {
     this.searchJobService.getAllJobs().subscribe({
       next: (jobs) => {
-        this.jobs = jobs;
-        console.log('Loaded jobs:', jobs);
+        // Repeat logos from 1.svg to 5.svg
+        const logoCount = 5;
+        this.jobs = jobs.map((job, index) => ({
+          ...job,
+          companylogo: `assets/images/companylogo/${(index % logoCount) + 1}.svg`
+        }));
+        console.log('Loaded jobs with logos:', this.jobs);
       },
       error: (err) => {
         console.error('Error loading jobs:', err);
       }
     });
-  }
+  }  
 
   // Open modal for creating a new job
   openCenter(content: TemplateRef<any>) {
@@ -80,10 +87,13 @@ export class SearchJobComponent implements OnInit {
     this.modalService.open(content, { centered: true });
   }
 
-  // Create or update a job based on presence of ID
-  saveJob() {
-    console.log('Saving job:', this.selectedJob);
-
+  // Create or update a job based on presence of ID, and only if form is valid
+  saveJob(form: NgForm) {
+    if (!form || !form.valid) {
+      console.warn('Form is invalid or not passed.');
+      return;
+    }
+  
     if (this.selectedJob.id && this.selectedJob.id !== 0) {
       // Update existing job
       this.searchJobService.updateJob(this.selectedJob.id, this.selectedJob).subscribe({
