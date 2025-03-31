@@ -5,7 +5,6 @@
       <div class="col-lg-2 aroundYou search-dropdown">
         <!-- Button trigger modal -->
         <button class="btn btn-primary" (click)="openCenter(exampleModal)">Create Job</button>
-
       </div>
       <div class="col-lg-10 d-md-flex">
         <input class="form-control input-rounded me-auto mb-md-0 mb-3" type="text" placeholder="Search by Title, Company or any jobs keyword...">
@@ -72,7 +71,12 @@
         <div *ngFor="let item of jobs; trackBy: trackByJobId">
           <div class="d-flex flex-wrap search-row bg-card py-3 mb-3 px-3 rounded justify-content-between align-items-center">
             <div class="d-flex col-xl-4 col-xxl-3 col-lg-4 col-sm-6 align-items-center">
-              <img [src]="item.companylogo" class="me-3 featured-logo" />
+              <img 
+                [src]="item.companylogo && item.companylogo.trim() !== '' ? item.companylogo : 'assets/images/companylogo/default-logo.svg'" 
+                class="me-3 featured-logo user-avatar" 
+                alt="Company Logo"
+                onerror="this.src='assets/images/companylogo/default-logo.svg'"
+              />
               <div>
                 <h2 class="title">
                   <a [routerLink]="['/', item.url]" class="text-black">{{ item.title }}</a>
@@ -122,76 +126,136 @@
     </div>
     <div class="modal-body">
       <div class="row">
+        <!-- Title Field -->
         <div class="col-xl-6 mb-3">
           <label class="form-label">Title</label>
           <input
             class="form-control"
             [(ngModel)]="selectedJob.title"
             name="title"
+            #titleInput="ngModel"
             required
             minlength="2"
+            pattern="^[a-zA-Z0-9 ]*$"
+            (input)="sanitizeInput($event, 'title', '[^a-zA-Z0-9 ]', titleInput)"
             placeholder="Senior UX Designer" />
-          <div *ngIf="jobForm.submitted && jobForm.controls['title']?.invalid" class="text-danger">
-            Title is required and must be at least 2 characters.
+          
+          <div *ngIf="(titleInput.touched || jobForm.submitted) && titleInput.invalid" class="text-danger mt-1">
+            <div *ngIf="titleInput.errors?.['required']">Title is required.</div>
+            <div *ngIf="titleInput.errors?.['minlength']">Title must be at least 2 characters.</div>
+            <div *ngIf="titleInput.errors?.['pattern']">Only letters, numbers, and spaces are allowed.</div>
           </div>
         </div>
 
+        <!-- Company Field -->
         <div class="col-xl-6 mb-3">
           <label class="form-label">Company</label>
           <input
             class="form-control"
             [(ngModel)]="selectedJob.company"
             name="company"
+            #companyInput="ngModel"
             required
+            minlength="2"
+            pattern="[a-zA-Z0-9 &.-]*"
+            (input)="sanitizeInput($event, 'company', '[^a-zA-Z0-9 &.-]', companyInput)"
             placeholder="Highspeed Studios" />
-          <div *ngIf="jobForm.submitted && jobForm.controls['company']?.invalid" class="text-danger">
-            Company name is required.
+          
+          <div *ngIf="(companyInput.touched || jobForm.submitted) && companyInput.invalid" class="text-danger mt-1">
+            <div *ngIf="companyInput.errors?.['required']">Company name is required.</div>
+            <div *ngIf="companyInput.errors?.['minlength']">Company name must be at least 2 characters.</div>
+            <div *ngIf="companyInput.errors?.['pattern']">Only letters, numbers, &, . and - are allowed.</div>
           </div>
         </div>
 
+        <!-- Company Logo Field -->
         <div class="col-xl-6 mb-3">
           <label class="form-label">Company Logo</label>
           <input
             class="form-control"
             [(ngModel)]="selectedJob.companylogo"
             name="companylogo"
-            required
-            placeholder="Logo URL" />
-          <div *ngIf="jobForm.submitted && jobForm.controls['companylogo'].invalid" class="text-danger">
-            Company logo is required.
+            #logoInput="ngModel"
+            pattern="https?:\/\/(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+([\/?].*)?"
+            (input)="sanitizeInput($event, 'companylogo', '[^a-zA-Z0-9@:%._+~#=/?&]', logoInput)"
+            placeholder="https://example.com/logo.svg"
+          />
+
+          <!-- Display validation errors -->
+          <div *ngIf="(logoInput.touched || jobForm.submitted) && logoInput.invalid" class="text-danger mt-1">
+            <div *ngIf="logoInput.errors?.['pattern']">Please enter a valid URL (e.g., https://example.com/logo.png)</div>
+          </div>
+
+          <!-- Display the logo preview (Default image if no logo is selected) -->
+          <div class="mt-2">
+            <img
+              [src]="getCompanyLogo()"
+              alt="Company Logo"
+              width="100"
+              height="100"
+              class="rounded"
+              *ngIf="selectedJob.companylogo || selectedJob.companylogo === ''"
+            />
           </div>
         </div>
 
+
+        <!-- Salary Field -->
         <div class="col-xl-6 mb-3">
           <label class="form-label">Salary</label>
-          <input type="number" class="form-control" [(ngModel)]="selectedJob.salary" name="salary" required min="0" placeholder="e.g. 25000">
-          <div *ngIf="jobForm.submitted && jobForm.controls['salary']?.invalid" class="text-danger">
-            Salary must be a positive number and is required.
+          <input type="number" 
+                 class="form-control" 
+                 [(ngModel)]="selectedJob.salary" 
+                 name="salary"
+                 #salaryInput="ngModel"
+                 required 
+                 min="0"
+                 (keypress)="validateNumber($event)"
+                 placeholder="e.g. 25000">
+          
+          <div *ngIf="(salaryInput.touched || jobForm.submitted) && salaryInput.invalid" class="text-danger mt-1">
+            <div *ngIf="salaryInput.errors?.['required']">Salary is required.</div>
+            <div *ngIf="salaryInput.errors?.['min']">Salary must be positive.</div>
           </div>
         </div>
 
+        <!-- Location Field -->
         <div class="col-xl-6 mb-3">
           <label class="form-label">Location</label>
           <input
             class="form-control"
             [(ngModel)]="selectedJob.location"
             name="location"
+            #locationInput="ngModel"
             required
+            minlength="2"
+            pattern="[a-zA-Z0-9 ,.-]*"
+            (input)="sanitizeInput($event, 'location', '[^a-zA-Z0-9 ,.-]', locationInput)"
             placeholder="City, Country" />
-          <div *ngIf="jobForm.submitted && jobForm.controls['location']?.invalid" class="text-danger">
-            Location is required.
+          
+          <div *ngIf="(locationInput.touched || jobForm.submitted) && locationInput.invalid" class="text-danger mt-1">
+            <div *ngIf="locationInput.errors?.['required']">Location is required.</div>
+            <div *ngIf="locationInput.errors?.['minlength']">Location must be at least 2 characters.</div>
+            <div *ngIf="locationInput.errors?.['pattern']">Only letters, numbers, spaces, commas, . and - are allowed.</div>
           </div>
         </div>
 
+        <!-- URL Field -->
         <div class="col-xl-6 mb-3">
           <label class="form-label">URL</label>
-          <input type="url" class="form-control" 
-          [(ngModel)]="selectedJob.url" 
-          name="url" 
-          required
-          pattern="https?://.+" 
-          placeholder="https://example.com/job-url">          <div *ngIf="jobForm.submitted && jobForm.controls['url']?.invalid" class="text-danger">
-            Please enter a valid job URL (e.g., https://example.com/job).
+          <input type="url" 
+                 class="form-control" 
+                 [(ngModel)]="selectedJob.url" 
+                 name="url"
+                 #urlInput="ngModel"
+                 required
+                 pattern="https?:\/\/(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+([\/?].*)?"
+                 (input)="sanitizeInput($event, 'url', '[^a-zA-Z0-9@:%._+~#=/?&]', urlInput)"
+                 placeholder="https://example.com/job-url">
+          
+          <div *ngIf="(urlInput.touched || jobForm.submitted) && urlInput.invalid" class="text-danger mt-1">
+            <div *ngIf="urlInput.errors?.['required']">Job URL is required.</div>
+            <div *ngIf="urlInput.errors?.['pattern']">Must start with http:// or https://</div>
           </div>
         </div>
       </div>

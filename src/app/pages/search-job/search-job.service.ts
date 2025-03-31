@@ -9,7 +9,7 @@ export interface Job {
   title: string;
   company: string;
   companylogo: string;
-  salary: string;
+  salary: number;
   location: string;
   url: string;
 }

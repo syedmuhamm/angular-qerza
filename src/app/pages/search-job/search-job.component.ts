@@ -33,7 +33,7 @@ export class SearchJobComponent implements OnInit {
     title: '',
     company: '',
     companylogo: '',
-    salary: '',
+    salary: 0,
     location: '',
     url: ''
   };
@@ -62,9 +62,7 @@ export class SearchJobComponent implements OnInit {
         const logoCount = 5;
         this.jobs = jobs.map((job, index) => ({
           ...job,
-          companylogo: `assets/images/companylogo/${(index % logoCount) + 1}.svg`
         }));
-        console.log('Loaded jobs with logos:', this.jobs);
       },
       error: (err) => {
         console.error('Error loading jobs:', err);
@@ -80,7 +78,7 @@ export class SearchJobComponent implements OnInit {
       title: '',
       company: '',
       companylogo: '',
-      salary: '',
+      salary: 0,
       location: '',
       url: ''
     };
@@ -90,7 +88,7 @@ export class SearchJobComponent implements OnInit {
   // Create or update a job based on presence of ID, and only if form is valid
   saveJob(form: NgForm) {
     if (!form || !form.valid) {
-      console.warn('Form is invalid or not passed.');
+      console.warn('Form is invalid.');
       return;
     }
   
@@ -98,30 +96,24 @@ export class SearchJobComponent implements OnInit {
       // Update existing job
       this.searchJobService.updateJob(this.selectedJob.id, this.selectedJob).subscribe({
         next: (updatedJob) => {
-          console.log('Job updated:', updatedJob);
           const index = this.jobs.findIndex(job => job.id === updatedJob.id);
           if (index !== -1) this.jobs[index] = updatedJob;
           this.modalService.dismissAll();
         },
-        error: (err) => {
-          console.error('Error updating job:', err);
-        }
+        error: (err) => console.error('Error updating job:', err)
       });
     } else {
-      // Create new job (omit dummy ID)
+      // Create new job
       const { id, ...jobWithoutId } = this.selectedJob;
       this.searchJobService.createJob(jobWithoutId as Omit<Job, 'id'>).subscribe({
         next: (createdJob) => {
-          console.log('Job created:', createdJob);
           this.jobs.unshift(createdJob);
           this.modalService.dismissAll();
         },
-        error: (err) => {
-          console.error('Error creating job:', err);
-        }
+        error: (err) => console.error('Error creating job:', err)
       });
     }
-  }
+  }  
 
   // Open modal with job pre-filled for editing
   editJob(job: Job, content: TemplateRef<any>) {
@@ -152,4 +144,44 @@ export class SearchJobComponent implements OnInit {
   trackByJobId(index: number, job: Job): number {
     return job.id!;
   }
+  
+  sanitizeInput<K extends keyof Job>(event: Event, fieldName: K, regexPattern: string, control: any) {
+    const input = event.target as HTMLInputElement;
+    const regex = new RegExp(regexPattern);
+    
+    // Allow the user to type anything, but check for invalid characters
+    if (!regex.test(input.value)) {
+      control.control.setErrors({ invalidCharacter: true });
+    } else {
+      control.control.setErrors(null);
+    }
+  
+    // Update the model (do not remove invalid characters)
+    this.selectedJob = {
+      ...this.selectedJob,
+      [fieldName]: fieldName === 'salary' ? parseInt(input.value) || 0 : input.value
+    };
+  
+    control.control.markAsTouched();
+    control.control.updateValueAndValidity();
+  }
+  
+
+  validateNumber(event: KeyboardEvent) {
+    const allowedKeys = ['Backspace', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'Delete'];
+    if (allowedKeys.includes(event.key)) {
+      return;
+    }
+    
+    if (!/[0-9]/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  getCompanyLogo(): string {
+    return this.selectedJob.companylogo && this.selectedJob.companylogo.trim() !== ''
+      ? this.selectedJob.companylogo
+      : 'assets/images/default-logo.svg';
+  }  
+  
 }
