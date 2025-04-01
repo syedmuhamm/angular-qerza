@@ -14,13 +14,13 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, company, companylogo, salary, location, url } = body;
+    const { title, company, companylogo, salary, location, url, jobtype } = body;
 
     const result = await pool.query(
-      `INSERT INTO jobs (title, company, companylogo, salary, location, url)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO jobs (title, company, companylogo, salary, location, url, jobtype)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [title, company, companylogo, salary, location, url]
+      [title, company, companylogo, salary, location, url, jobtype]
     );
 
     return NextResponse.json(result.rows[0], { status: 201 });

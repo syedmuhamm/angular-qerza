@@ -7,6 +7,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { NgForm } from '@angular/forms';
+import { ChangeDetectorRef } from '@angular/core';
 
 
 @Component({
@@ -31,12 +32,17 @@ export class SearchJobComponent implements OnInit {
   selectedJob: Job = {
     id: 0,
     title: '',
+    jobtype: '',
     company: '',
     companylogo: '',
     salary: 0,
     location: '',
     url: ''
   };
+
+  // Dropdown values
+  jobTitles: string[] = ['Software Engineer', 'UX Designer', 'Photographer', 'Digital Marketing'];
+  jobTypes: string[] = ['Fulltime', 'Freelance'];
 
   // Dropdown filter options
   dropdown_item = {
@@ -45,9 +51,11 @@ export class SearchJobComponent implements OnInit {
     image: ['assets/images/svg/arrow-down-short.svg']
   };
 
+
   constructor(
     private searchJobService: SearchJobService,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -58,24 +66,53 @@ export class SearchJobComponent implements OnInit {
   loadJobs() {
     this.searchJobService.getAllJobs().subscribe({
       next: (jobs) => {
-        // Repeat logos from 1.svg to 5.svg
-        const logoCount = 5;
-        this.jobs = jobs.map((job, index) => ({
-          ...job,
-        }));
+        this.jobs = jobs;
       },
       error: (err) => {
         console.error('Error loading jobs:', err);
       }
     });
-  }  
+  }
+  
 
+  filterOptions = {
+    fulltime: false,
+    freelance: false,
+    showDetails: true,
+    showSalary: true
+  };
+  
+  get filteredJobs() {
+    return this.jobs.filter(job => {
+      // If neither checkbox is checked, show all jobs
+      if (!this.filterOptions.fulltime && !this.filterOptions.freelance) {
+        return true;
+      }
+  
+      // If both checkboxes are checked, include all jobs
+      if (this.filterOptions.fulltime && this.filterOptions.freelance) {
+        return job.jobtype === 'Fulltime' || job.jobtype === 'Freelance';
+      }
+  
+      // If only one checkbox is checked, filter accordingly
+      if (this.filterOptions.fulltime) {
+        return job.jobtype === 'Fulltime';
+      }
+      if (this.filterOptions.freelance) {
+        return job.jobtype === 'Freelance';
+      }
+  
+      return false; // Fallback (should never be reached)
+    });
+  }
+  
   // Open modal for creating a new job
   openCenter(content: TemplateRef<any>) {
     // Reset form
     this.selectedJob = {
       id: 0,
       title: '',
+      jobtype: '',
       company: '',
       companylogo: '',
       salary: 0,
@@ -87,17 +124,16 @@ export class SearchJobComponent implements OnInit {
 
   // Create or update a job based on presence of ID, and only if form is valid
   saveJob(form: NgForm) {
-    if (!form || !form.valid) {
+    if (!form.valid) {
       console.warn('Form is invalid.');
       return;
     }
   
-    if (this.selectedJob.id && this.selectedJob.id !== 0) {
-      // Update existing job
+    if (this.selectedJob.id !== 0) {
       this.searchJobService.updateJob(this.selectedJob.id, this.selectedJob).subscribe({
         next: (updatedJob) => {
           const index = this.jobs.findIndex(job => job.id === updatedJob.id);
-          if (index !== -1) this.jobs[index] = updatedJob;
+          if (index !== -1) this.jobs[index] = updatedJob; // Update the job in the list
           this.modalService.dismissAll();
         },
         error: (err) => console.error('Error updating job:', err)
@@ -107,20 +143,24 @@ export class SearchJobComponent implements OnInit {
       const { id, ...jobWithoutId } = this.selectedJob;
       this.searchJobService.createJob(jobWithoutId as Omit<Job, 'id'>).subscribe({
         next: (createdJob) => {
-          this.jobs.unshift(createdJob);
+          this.jobs.unshift(createdJob);  // Add the new job to the list
           this.modalService.dismissAll();
         },
         error: (err) => console.error('Error creating job:', err)
       });
     }
-  }  
+  }
+  
 
   // Open modal with job pre-filled for editing
   editJob(job: Job, content: TemplateRef<any>) {
-    console.log('Editing job:', job);
+    console.log('Editing job:', job); // Check if jobType exists here
     this.selectedJob = { ...job };
+    console.log('Selected Job Type:', this.selectedJob.jobtype);  // Check if jobType is correctly assigned
     this.modalService.open(content, { centered: true });
+    this.cdr.detectChanges();  // Force change detection to update UI
   }
+  
 
   // Delete a job by ID
   deleteJob(id: number | undefined) {

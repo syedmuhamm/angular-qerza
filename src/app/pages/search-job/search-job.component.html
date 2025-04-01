@@ -29,22 +29,30 @@
         <h6 class="text-black fs-16 font-w600 mb-1">Showing 246 Jobs Results</h6>
         <span class="fs-14">Based your preferences</span>
       </div>
+      <!-- Fulltime Checkbox -->
       <div class="form-check check-switch custom-checkbox me-3 mb-2">
-        <input type="checkbox" class="form-check-input" id="customCheck9">
+        <input type="checkbox" class="form-check-input" id="customCheck9" [(ngModel)]="filterOptions.fulltime">
         <label class="form-check-label" for="customCheck9">Fulltime</label>
       </div>
+
+      <!-- Freelance Checkbox -->
       <div class="form-check check-switch custom-checkbox me-4 mb-2">
-        <input type="checkbox" class="form-check-input" id="customCheck1">
+        <input type="checkbox" class="form-check-input" id="customCheck1" [(ngModel)]="filterOptions.freelance">
         <label class="form-check-label" for="customCheck1">Freelance</label>
       </div>
+
+      <!-- Details Switch -->
       <div class="form-check custom-switch toggle-switch text-end me-3 mb-2">
-        <input type="checkbox" class="form-check-input" id="customSwitch11">
+        <input type="checkbox" class="form-check-input" id="customSwitch11" [(ngModel)]="filterOptions.showDetails">
         <label class="form-check-label" for="customSwitch11">Details</label>
       </div>
+
+      <!-- Salary Switch -->
       <div class="form-check custom-switch toggle-switch text-end me-4 mb-2">
-        <input type="checkbox" class="form-check-input" id="customSwitch12">
+        <input type="checkbox" class="form-check-input" id="customSwitch12" [(ngModel)]="filterOptions.showSalary">
         <label class="form-check-label" for="customSwitch12">Salary</label>
       </div>
+
       <div class="mb-0 me-3 mt-3 mt-sm-0 mb-2">
         <app-dropdown [dropdown]="dropdown_item" class="default-select style-1 w-auto"></app-dropdown>
       </div>
@@ -68,7 +76,7 @@
     </div>
     <div class="row">
       <div class="col-xl-12">
-        <div *ngFor="let item of jobs; trackBy: trackByJobId">
+        <div *ngFor="let item of filteredJobs; trackBy: trackByJobId">
           <div class="d-flex flex-wrap search-row bg-card py-3 mb-3 px-3 rounded justify-content-between align-items-center">
             <div class="d-flex col-xl-4 col-xxl-3 col-lg-4 col-sm-6 align-items-center">
               <img 
@@ -85,21 +93,24 @@
               </div>
             </div>
     
-            <div class="d-flex col-xl-3 col-lg-4 col-sm-6 align-items-center">
+            <!-- Salary Section -->
+            <div *ngIf="filterOptions.showSalary" class="d-flex col-xl-3 col-lg-4 col-sm-6 align-items-center">
               <img src="assets/images/svg/icsalary.svg" class="me-3 mt-sm-0 mt-3 rounded-2" />
               <div>
                 <h4 class="sub-title text-black">{{ item.salary }}</h4>
                 <span>Monthly Salary</span>
               </div>
             </div>
-    
-            <div class="d-flex col-xl-3 col-lg-4 col-sm-6 mt-lg-0 mt-3 align-items-center">
+
+            <!-- Details Section -->
+            <div *ngIf="filterOptions.showDetails" class="d-flex col-xl-3 col-lg-4 col-sm-6 mt-lg-0 mt-3 align-items-center">
               <img src="assets/images/svg/iclocation.svg" class="me-3 mt-sm-0 mt-3 rounded-2" />
               <div>
                 <h4 class="sub-title text-black">{{ item.location }}</h4>
                 <span>Location</span>
               </div>
             </div>
+
     
             <div class="col-xl-2 col-xxl-3 text-xl-end text-lg-start text-sm-end col-lg-12 col-sm-6 mt-xl-0 mt-3">
               <button class="btn btn-sm btn-warning me-2" (click)="editJob(item, exampleModal)">
@@ -129,21 +140,28 @@
         <!-- Title Field -->
         <div class="col-xl-6 mb-3">
           <label class="form-label">Title</label>
-          <input
-            class="form-control"
-            [(ngModel)]="selectedJob.title"
-            name="title"
-            #titleInput="ngModel"
-            required
-            minlength="2"
-            pattern="^[a-zA-Z0-9 ]*$"
-            (input)="sanitizeInput($event, 'title', '[^a-zA-Z0-9 ]', titleInput)"
-            placeholder="Senior UX Designer" />
+          <select class="form-select" [(ngModel)]="selectedJob.title" name="title" required>
+            <option value="" disabled selected>Select Job Title</option>
+            <option *ngFor="let title of jobTitles" [value]="title">{{ title }}</option>
+          </select>
+        
+          <div *ngIf="jobForm.submitted && !selectedJob.title" class="text-danger mt-1">
+            Title is required.
+          </div>
+        </div>
+
+        <!-- Job Type Dropdown -->
+        <div class="col-xl-6 mb-3">
+          <label class="form-label">Job Type</label>
+          <select class="form-select" [(ngModel)]="selectedJob.jobtype" name="jobtype" required>
+            <option value="" disabled selected>Select Job Type</option>
+            <option *ngFor="let type of jobTypes" [value]="type" [selected]="type === selectedJob.jobtype">{{ type }}</option>
+          </select>
+
           
-          <div *ngIf="(titleInput.touched || jobForm.submitted) && titleInput.invalid" class="text-danger mt-1">
-            <div *ngIf="titleInput.errors?.['required']">Title is required.</div>
-            <div *ngIf="titleInput.errors?.['minlength']">Title must be at least 2 characters.</div>
-            <div *ngIf="titleInput.errors?.['pattern']">Only letters, numbers, and spaces are allowed.</div>
+
+          <div *ngIf="jobForm.submitted && !selectedJob.jobtype" class="text-danger mt-1">
+            Job Type is required.
           </div>
         </div>
 
@@ -190,9 +208,9 @@
           <div class="mt-2">
             <img
               [src]="getCompanyLogo()"
-              alt="Company Logo"
-              width="100"
-              height="100"
+              alt="LOGO VIEW"
+              width="30"
+              height="30"
               class="rounded"
               *ngIf="selectedJob.companylogo || selectedJob.companylogo === ''"
             />

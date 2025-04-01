@@ -7,6 +7,7 @@ const API_URL = 'http://localhost:3000/api/jobs';
 export interface Job {
   id: number;
   title: string;
+  jobtype: string,
   company: string;
   companylogo: string;
   salary: number;
